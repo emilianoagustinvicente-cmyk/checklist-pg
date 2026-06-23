@@ -773,7 +773,7 @@ function pdfCarroHerramientas(doc,d,itms,L,R,TW,PH,PW){
   [[L,itemW,'PUNTO DE REVISIÓN'],[L+itemW,okW,'OK'],[L+itemW+okW,falW,'FALTA'],[L+itemW+okW+falW,danW,'DAÑADA'],[L+itemW+okW+falW+danW,obsW,'OBSERVACIÓN']].forEach(([x,w,t])=>{
     doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
   });y+=6;
-  Object.entries(CARRO_DATA).forEach(([secName,items])=>{
+  Object.entries(CARRO_SECTIONS).forEach(([secName,items])=>{
     if(y+6>PH-20){doc.addPage();y=12;}
     doc.setFillColor(144,135,70);doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);doc.rect(L,y,TW,6,'FD');
     doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text(secName,L+2,y+4.2);y+=6;
@@ -822,7 +822,7 @@ function pdfHerrCamion(doc,d,itms,L,R,TW,PH,PW){
   [[L,hW,'Herramienta'],[L+hW,cantW,'Cant.'],[L+hW+cantW,marcaW,'Marca'],[L+hW+cantW+marcaW,siW,'SI'],[L+hW+cantW+marcaW+siW,noW,'NO']].forEach(([x,w,t])=>{
     doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
   });y+=6;
-  HERR_CAMION.forEach(([name,cant,marca],i)=>{
+  HERR_CAMION.forEach(({name,cant,marca},i)=>{
     if(y+5.5>PH-18){doc.addPage();y=12;}
     doc.setFillColor(...(i%2===0?[255,255,255]:[245,245,245]));doc.setDrawColor(175,175,175);doc.setLineWidth(0.22);
     [[L,hW],[L+hW,cantW],[L+hW+cantW,marcaW],[L+hW+cantW+marcaW,siW],[L+hW+cantW+marcaW+siW,noW]].forEach(([x,w])=>doc.rect(x,y,w,5.5,'FD'));
