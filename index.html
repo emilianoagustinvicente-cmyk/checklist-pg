@@ -668,9 +668,9 @@ function pdfCamionLubricador(doc,d,itms,L,R,TW,PH,PW){
   metaCell(doc,L,y,half,7,'FECHA: ',d.fecha||'');metaCell(doc,L+half,y,half,7,'HORA: ',d.hora||'');y+=7;
   metaCell(doc,L,y,half,7,'KILOMETROS: ',d.km||'');metaCell(doc,L+half,y,half,7,'HOROMETRO: ',d.horometro||'');y+=9;
   const numW=8,itemW=TW-numW-56,corW=28,incW=28;
-  doc.setFillColor(210,210,210);doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
+  doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
   [[L,numW,''],[L+numW,itemW,''],[L+numW+itemW,corW,'Correcto'],[L+numW+itemW+corW,incW,'Incorrecto']].forEach(([x,w,t])=>{
-    doc.rect(x,y,w,6,'FD');if(t){doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});}
+    doc.setFillColor(210,210,210);doc.rect(x,y,w,6,'FD');if(t){doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});}
   });y+=6;
   [['MOTOR',MOTOR_ITEMS,'motor'],['CABINA',CABINA_ITEMS,'cabina'],['SISTEMA ELECTRICO',ELECTRICO_ITEMS,'electrico'],['EXTERIOR',EXTERIOR_ITEMS,'exterior'],['LUBRICACION',LUBRICACION_ITEMS,'lubricacion']].forEach(([sn,items,pfx])=>{
     if(y+7>PH-20){doc.addPage();y=12;}
@@ -725,9 +725,9 @@ function pdfVehiculoLiviano(doc,d,itms,L,R,TW,PH,PW){
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(0,0,0);
   doc.text('ESTADO GENERAL',PW/2,y+4.5,{align:'center'});y+=7;
   const itemW=TW-50,corW=25,incW=25;
-  doc.setFillColor(220,220,220);doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
+  doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
   [[L,itemW,'VERIFICAR CONDICIÓN'],[L+itemW,corW,'Correcto'],[L+itemW+corW,incW,'Incorrecto']].forEach(([x,w,t])=>{
-    doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(t,x+w/2,y+4,{align:'center'});
+    doc.setFillColor(220,220,220);doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
   });y+=6;
   VEH_ITEMS.forEach((item,i)=>{
     const lines=doc.splitTextToSize(item,itemW-2.5);const rh=Math.max(5.5,lines.length*4+1.5);
@@ -768,9 +768,9 @@ function pdfCarroHerramientas(doc,d,itms,L,R,TW,PH,PW){
   metaCell(doc,L,y,third,7,'FECHA: ',d.fecha||'');metaCell(doc,L+third,y,third,7,'N° DE CARRO: ',d.carro||'');metaCell(doc,L+2*third,y,third,7,'N° DE SERIE: ',d.serie||'');y+=7;
   metaCell(doc,L,y,third,7,'RESP. DE LA INSPECCIÓN: ',d.resp||'');metaCell(doc,L+third,y,third,7,'N° DE BAHIA: ',d.bahia||'');metaCell(doc,L+2*third,y,third,7,'TURNO: ',d.turno_sel||'');y+=9;
   const itemW=TW-3*18-35,okW=18,falW=18,danW=18,obsW=35;
-  doc.setFillColor(210,210,210);doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
+  doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
   [[L,itemW,'PUNTO DE REVISIÓN'],[L+itemW,okW,'OK'],[L+itemW+okW,falW,'FALTA'],[L+itemW+okW+falW,danW,'DAÑADA'],[L+itemW+okW+falW+danW,obsW,'OBSERVACIÓN']].forEach(([x,w,t])=>{
-    doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
+    doc.setFillColor(210,210,210);doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
   });y+=6;
   Object.entries(CARRO_SECTIONS).forEach(([secName,items])=>{
     if(y+6>PH-20){doc.addPage();y=12;}
@@ -817,9 +817,9 @@ function pdfHerrCamion(doc,d,itms,L,R,TW,PH,PW){
   const half=TW/2;
   metaCell(doc,L,y,half,7,'Inspector: ',d.inspector||'',9);metaCell(doc,L+half,y,half,7,'Fecha: ',d.fecha||'',9);y+=9;
   const hW=TW-15-30-15-15,cantW=15,marcaW=30,siW=15,noW=15;
-  doc.setFillColor(210,210,210);doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
+  doc.setDrawColor(150,150,150);doc.setLineWidth(0.3);
   [[L,hW,'Herramienta'],[L+hW,cantW,'Cant.'],[L+hW+cantW,marcaW,'Marca'],[L+hW+cantW+marcaW,siW,'SI'],[L+hW+cantW+marcaW+siW,noW,'NO']].forEach(([x,w,t])=>{
-    doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
+    doc.setFillColor(210,210,210);doc.rect(x,y,w,6,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(0,0,0);doc.text(t,x+w/2,y+4,{align:'center'});
   });y+=6;
   HERR_CAMION.forEach(({name,cant,marca},i)=>{
     if(y+5.5>PH-18){doc.addPage();y=12;}
