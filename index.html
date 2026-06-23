@@ -660,7 +660,6 @@ function dataRow(doc,y,PH,L,TW,cells,rowIdx,fs=8){
 function pdfCamionLubricador(doc,d,itms,L,R,TW,PH,PW){
   let y=8;
   doc.addImage(IMGS.logo_camion,'PNG',L,y,36,15);
-  doc.addImage(IMGS.camion_truck, 'JPEG', R-75, y-18, 70, 20);
   y+=19;
   doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(0,0,0);
   doc.text('CHECK LIST DE PRE-USO CAMION LUBRICADOR',PW/2,y,{align:'center'});
