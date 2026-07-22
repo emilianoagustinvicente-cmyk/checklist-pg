@@ -82,6 +82,31 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
   .content{padding:1rem}
 }
 
+/* ADMIN PANEL */
+.btn-config{background:#c8a84b;color:#1a2a3a;border:none;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-config:hover{background:#b8943b}
+.admin-panel{background:#fff;border-radius:10px;padding:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.admin-tabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.admin-tab{padding:8px 14px;border:2px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#888}
+.admin-tab-active{border-color:#c8a84b;background:#fffdf0;color:#1a2a3a}
+.admin-subsection{margin-bottom:1rem}
+.admin-subsection label{font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px}
+.admin-subsection select{padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none}
+.admin-section-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.admin-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:4px;background:#fafafa;gap:8px}
+.admin-item span{font-size:13px;color:#333;flex:1}
+.admin-del-btn{background:#fee;color:#c0392b;border:1px solid #f5c6cb;padding:4px 9px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+.admin-del-btn:hover{background:#fdd}
+.admin-add-form{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.admin-add-form input{flex:1;min-width:140px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none}
+.admin-add-form input:focus{border-color:#c8a84b}
+.admin-add-btn{background:#1a2a3a;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.admin-add-btn:hover{background:#2a3f58}
+.admin-herr-table{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:13px}
+.admin-herr-table th{background:#f0f2f5;font-size:11px;font-weight:700;color:#555;padding:7px 10px;text-align:left;border:1px solid #e0e0e0}
+.admin-herr-table td{padding:7px 10px;border:1px solid #e8e8e8}
+.admin-save-msg{background:#e8f5e9;border:1px solid #81c784;border-radius:6px;padding:8px 12px;font-size:13px;color:#2e7d32;font-weight:600;margin-bottom:8px;display:none}
+
 /* PREVIEW MODAL */
 #previewModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;flex-direction:column;align-items:center;justify-content:center}
 .preview-box{background:#fff;border-radius:10px;width:92%;max-width:900px;height:88vh;display:flex;flex-direction:column;overflow:hidden}
@@ -96,7 +121,7 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBR_5vvof8At-sizMQemjUvI0gLou5ldrQ",
@@ -119,6 +144,8 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
     window._fsOrderBy     = orderBy;
     window._fsDeleteDoc   = deleteDoc;
     window._fsDoc         = doc;
+    window._fsSetDoc      = setDoc;
+    window._fsGetDoc      = getDoc;
     window._fsReady       = true;
 
     // ── Real-time listener: keeps localStorage in sync with Firestore ──
@@ -306,30 +333,109 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
   <!-- SUPERVISOR -->
   <div id="supervisorView" class="hidden">
     <div class="content" style="max-width:100%;padding:1.5rem 2rem">
-      <div class="sup-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="sup-title">Chequeos registrados</span>
-          <span class="count-badge" id="countBadge">0</span>
+
+      <!-- Sección chequeos -->
+      <div id="recordsSection">
+        <div class="sup-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="sup-title">Chequeos registrados</span>
+            <span class="count-badge" id="countBadge">0</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="showAdmin()" class="btn-config">⚙ Configurar Listas</button>
+            <button onclick="clearFilters()" style="padding:8px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Limpiar filtros</button>
+          </div>
         </div>
-        <button onclick="clearFilters()" style="padding:8px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Limpiar filtros</button>
+        <div class="filter-row">
+          <select id="filterTipo" onchange="renderRecords()">
+            <option value="">Todos los formularios</option>
+            <option value="Camión Lubricador">Camión Lubricador</option>
+            <option value="Vehículo Liviano">Vehículo Liviano</option>
+            <option value="Carro Herramientas">Carro Herramientas</option>
+            <option value="Herr. Camión">Herr. Camión</option>
+          </select>
+          <select id="filterTurno" onchange="renderRecords()">
+            <option value="">Todos los turnos</option>
+            <option value="Inicio de turno">Inicio</option>
+            <option value="Mitad de turno">Mitad</option>
+            <option value="Fin de turno">Fin</option>
+          </select>
+          <input type="date" id="filterFecha" onchange="renderRecords()">
+        </div>
+        <div id="recordsList"></div>
       </div>
-      <div class="filter-row">
-        <select id="filterTipo" onchange="renderRecords()">
-          <option value="">Todos los formularios</option>
-          <option value="Camión Lubricador">Camión Lubricador</option>
-          <option value="Vehículo Liviano">Vehículo Liviano</option>
-          <option value="Carro Herramientas">Carro Herramientas</option>
-          <option value="Herr. Camión">Herr. Camión</option>
-        </select>
-        <select id="filterTurno" onchange="renderRecords()">
-          <option value="">Todos los turnos</option>
-          <option value="Inicio de turno">Inicio</option>
-          <option value="Mitad de turno">Mitad</option>
-          <option value="Fin de turno">Fin</option>
-        </select>
-        <input type="date" id="filterFecha" onchange="renderRecords()">
+
+      <!-- Panel de administración de listas -->
+      <div id="adminPanel" class="hidden">
+        <div class="sup-header" style="margin-bottom:1rem">
+          <span class="sup-title">Configurar Listas</span>
+          <button onclick="hideAdmin()" style="padding:8px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">← Volver</button>
+        </div>
+        <div id="adminSaveMsg" class="admin-save-msg">✓ Cambios guardados</div>
+        <div class="admin-panel">
+          <div class="admin-tabs">
+            <button id="atab-btn-camion"   class="admin-tab admin-tab-active" onclick="showAdminTab('camion')">Camión Lubricador</button>
+            <button id="atab-btn-vehiculo" class="admin-tab" onclick="showAdminTab('vehiculo')">Vehículo Liviano</button>
+            <button id="atab-btn-carro"    class="admin-tab" onclick="showAdminTab('carro')">Carro Herramientas</button>
+            <button id="atab-btn-herr"     class="admin-tab" onclick="showAdminTab('herr')">Herr. Camión</button>
+          </div>
+
+          <!-- Tab: Camión Lubricador -->
+          <div id="atab-content-camion">
+            <div class="admin-subsection">
+              <label>Sección del camión:</label>
+              <select id="camion-section-select" onchange="renderCamionSection()">
+                <option value="motor">Motor</option>
+                <option value="cabina">Cabina</option>
+                <option value="electrico">Sistema Eléctrico</option>
+                <option value="exterior">Exterior</option>
+                <option value="lubricacion">Lubricación</option>
+              </select>
+            </div>
+            <div id="camion-items-list"></div>
+            <div class="admin-add-form">
+              <input type="text" id="camion-new-item" placeholder="Nuevo ítem de verificación...">
+              <button class="admin-add-btn" onclick="addCamionItem()">+ Agregar</button>
+            </div>
+          </div>
+
+          <!-- Tab: Vehículo Liviano -->
+          <div id="atab-content-vehiculo" class="hidden">
+            <div id="vehiculo-items-list"></div>
+            <div class="admin-add-form">
+              <input type="text" id="vehiculo-new-item" placeholder="Nuevo ítem de verificación...">
+              <button class="admin-add-btn" onclick="addVehiculoItem()">+ Agregar</button>
+            </div>
+          </div>
+
+          <!-- Tab: Carro Herramientas -->
+          <div id="atab-content-carro" class="hidden">
+            <div class="admin-subsection">
+              <div class="admin-section-header">
+                <select id="carro-section-select" onchange="renderCarroSection()" style="padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none"></select>
+                <button class="admin-add-btn" onclick="addCarroSection()" style="padding:7px 12px">+ Sección</button>
+              </div>
+            </div>
+            <div id="carro-items-list"></div>
+            <div class="admin-add-form">
+              <input type="text" id="carro-new-item" placeholder="Nuevo ítem (ej: 1x BE1234 - Descripción)...">
+              <button class="admin-add-btn" onclick="addCarroItem()">+ Agregar</button>
+            </div>
+          </div>
+
+          <!-- Tab: Herramientas Camión -->
+          <div id="atab-content-herr" class="hidden">
+            <div id="herr-items-list"></div>
+            <div class="admin-add-form">
+              <input type="text"   id="herr-new-name"  placeholder="Nombre herramienta" style="flex:2">
+              <input type="number" id="herr-new-cant"  placeholder="Cant" value="1" style="width:70px;flex:none">
+              <input type="text"   id="herr-new-marca" placeholder="Marca" style="flex:1">
+              <button class="admin-add-btn" onclick="addHerrItem()">+ Agregar</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="recordsList"></div>
+
     </div>
   </div>
 </div>
@@ -338,14 +444,15 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
 const USERS={supervisor:{pass:'super2024',role:'supervisor'},tecnico:{pass:'tec2024',role:'tecnico'}};
 let currentRole='',currentTurno='Inicio de turno',currentFormIdx=0;
 
-const MOTOR_ITEMS=['Chequear nivel de aceite de motor','Chequear nivel de refrigerante','Chequear nivel de líquido lavaparabrisas (completar de ser necesario)','Chequear nivel de urea (completar de ser necesario)','Revisar existencia de fugas (aceite, refrigerante)'];
-const CABINA_ITEMS=['Limpieza interior del equipo','Limpieza de tapizados (asientos, paneles, techo)','Chequeo de calefacción y aire acondicionado','Estado de espejos','Estado de cristales','Estado de escobillas'];
-const ELECTRICO_ITEMS=['Estado de luces (verificar funcionamiento)','Revisar fallas en tablero','Funcionamiento de bocina'];
-const EXTERIOR_ITEMS=['Limpieza exterior','Estado de neumáticos delanteros','Estado de neumáticos traseros','Estado de ópticas delanteras','Estado de faros traseros','Estado de extintor','Estado de patentes','Estado de faros de carrocería'];
-const LUBRICACION_ITEMS=['Verificar existencia de fugas (tanques, carreteles, mangueras, surtidores)','Verificar el nivel hidráulico del sistema de lubricación','Verificar nivel de aceite del compresor y purgar','Verificar niveles de los tanques de almacenamiento (agua, aceites, refrig.)','Verificar nivel de combustible de las calderas de calefacción','Verificar limpieza de los carreteles','Verificar limpieza del interior de la caja','Verificar limpieza de la bandeja escurridora de filtros','Verificar estado de escalera y malacate para tambores','Verificar estado de luces interiores'];
-const VEH_ITEMS=['Bocina','Estado de Carrocería','Estado de Ópticas y vidrios','Funcionamiento de Luces','Limpieza (Interior y exterior)','Radio Base','Baliza triangulo','Pertiga','Alarma de retroceso','Crique','Llave de rueda','Papeles (cedula, seguro, permisos, vtv)','Patentes (existencia y estado)','Cinturones de seguridad','Extintor y soporte (Estado)','Cuña (calzas)','Neumáticos y llantas (presión 35)','Neumático de auxilio','Espejos','Nivel líquido de frenos','Nivel de aceite de motor','Nivel de líquido refrigerante','Freno de mano'];
-const CARRO_SECTIONS={'BANDEJA 1':['1x BE5049 - Juego de llaves de vaso y puntas - 49 piezas','1x BE6217 - Juego de llaves de vaso para tapón de drenaje de aceite con cuadradillo de 3/8" - 17 piezas','1x CAV/115x80x30','1x DD/S14 - Juego de llaves de vaso de impacto mixtas con cuadradillo de 1/2"','1x S9HEX - Juego de llaves de vaso de 1/2" con puntas hexagonales - 9 piezas'],'BANDEJA 2':['1x 1995M-1.5 - Llave Allen hexagonal métrica de 1.5 mm','1x 1995M-2 - Llave Allen hexagonal métrica de 2 mm','1x 1995M-2.5 - Llave Allen hexagonal métrica de 2.5 mm','1x 6950QR - Trinquete reversible de cabeza de pera de 1/4" con 60 dientes','1x 6954-5 - Mango en T deslizante con cuadradillo de 1/4"','1x 6956 - Mango giratorio con cuadradillo de 1/4"','1x 6960-2 - Barra de extensión con cuadradillo de 1/4" de 50 mm','1x 6960-4 - Extensión con cuadradillo de 1/4" - 101 mm','1x 6960F-6 - Barra de extensión flexible con cuadradillo de 1/4"','1x 6966 - Junta universal con cuadradillo de 1/4"','2x 7400SM-10 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 10 mm','2x 7400SM-12 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 12 mm','2x 7400SM-14 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 14 mm','1x 7400SM-16 - Vaso de 3/8" con perfil hexagonal de 16 mm','1x 7400SM-18 - Vaso de 3/8" con perfil hexagonal de 18 mm','1x 7400SM-20 - Vaso de 3/8" con perfil hexagonal de 20 mm','1x 7400SM-22 - Vaso de 3/8" con perfil hexagonal de 22 mm','1x 7402GPR-16 - Vaso para bujías de 3/8", 16 mm','1x 7402GPR-18 - Vaso para bujías de 3/8", 18 mm','1x 7402GPR-21 - Vaso para bujías de 3/8", 21 mm','1x 749-10 - Llave de boca abierta de 3/8", 10 mm','1x 749-11 - Llave de boca abierta de 3/8", 11 mm','1x 749-13 - Llave de boca abierta de 3/8", 13 mm','1x 749-14 - Llave de boca abierta de 3/8", 14 mm','1x 749-15 - Llave de boca abierta de 3/8", 15 mm','1x 749-17 - Llave de boca abierta de 3/8", 17 mm','1x 749-18 - Llave de boca abierta de 3/8", 18 mm','1x 749-19 - Llave de boca abierta de 3/8", 19 mm'],'BANDEJA 3':['1x 3625PU-50 - Maza de golpe seco con mango antideslizante (640 g)','1x 484-2000 - Maza con mango de nogal (2 kg)','1x 2535L - Herramienta de agarre magnético con luz','1x P-3140-100','1x P-3140-125','1x P-3155-125','1x P-3165-125','1x P-3165-150','1x P-3230-75','1x P-3240-125','1x P-3300-150','1x P-3300-75','1x P-3301-100','1x P-3302-150','1x P-3303-150'],'BANDEJA 4':['1x 2101GC-160IP - Alicates de corte lateral ERGO™','1x 21HDGC-200IP - Alicates de corte lateral de alta resistencia ERGO™','1x 2427GC-200IP - Alicates de punta semirredondeada ERGO™','1x 2430GC-200IP - Alicates de punta semirredondeada larga ERGO™','1x 2628GC-160IP - Alicates universales ERGO™ 160 mm','1x 2628GC-180IP - Alicates universales ERGO™ 180 mm','1x 2928-160 - Alicates reajustables para anillos de retención 160 mm','1x 2928-200 - Alicates reajustables para anillos de retención 200 mm','1x 2928-250 - Alicates reajustables para anillos de retención 250 mm','1x 2951-250 - Alicates de presión con mordazas curvas','1x 2952-165 - Alicates de presión con mordazas largas','1x 8224CIP - Alicates para bombas de agua ERGO™','1x BFLA01'],'BANDEJA 5':['1x 111Z-1/4','1x 111Z-5/16','1x 111Z-3/8','1x 111Z-7/16','1x 111Z-1/2','1x 111Z-9/16','1x 111Z-5/8','1x 111Z-11/16','1x 111Z-3/4','1x 111Z-7/8','1x 111Z-15/16','1x 111Z-1','1x 6Z-1/4-5/16','1x 6Z-3/8-7/16','1x 6Z-1/2-9/16','1x 6Z-5/8-3/4','1x 6Z-15/16-1','1x 6Z-1-1.1/8','1x 8069C IP - Llave ajustable 13 mm','1x 9070C - Llave ajustable ERGO™ 20 mm'],'BANDEJA 6':['1x 111M-6 al 111M-32 (llaves combinadas planas métricas completas)','1x 6M-6-7 al 6M-30-32 (llaves de boca doble métricas completas)','1x 1320RM-8-9, 10-11, 12-13 (llaves de carraca métricas)','1x 9071C - Llave ajustable ERGO™ 27 mm']};
-const HERR_CAMION=[{name:'Masa 1/2kg',cant:1,marca:'Mota'},{name:'Martillo bolita',cant:1,marca:'Bahco'},{name:'Llave Stylson',cant:1,marca:'Bahco'},{name:'Saca filtro',cant:1,marca:'Bahco'},{name:'Alicate',cant:1,marca:'Bahco'},{name:'Pinza',cant:1,marca:'Bahco'},{name:'Pico de loro',cant:1,marca:'Bahco'},{name:'Mango de fuerza',cant:1,marca:'Bahco'},{name:'Llave combinada 10',cant:1,marca:'Bahco'},{name:'Llave combinada 1/2',cant:1,marca:'Bahco'},{name:'Llave combinada 13',cant:1,marca:'Bahco'},{name:'Llave combinada 14',cant:1,marca:'Bahco'},{name:'Llave combinada 11/16',cant:1,marca:'Bahco'},{name:'Llave combinada 17',cant:1,marca:'Bahco'},{name:'Llave combinada 18',cant:1,marca:'Bahco'},{name:'Llave combinada 19',cant:1,marca:'Bahco'},{name:'Llave combinada 20',cant:1,marca:'Bahco'},{name:'Llave combinada 21',cant:1,marca:'Bahco'},{name:'Llave combinada 22',cant:1,marca:'Bahco'},{name:'Llave combinada 23',cant:1,marca:'Bahco'},{name:'Llave combinada 24',cant:1,marca:'Bahco'},{name:'Llave combinada 25',cant:1,marca:'Bahco'},{name:'Llave combinada 26',cant:1,marca:'Bahco'},{name:'Llave combinada 27',cant:1,marca:'Bahco'},{name:'Juego de tubos S81MIX',cant:1,marca:'Bahco'},{name:'Destornillador philip 3x75',cant:1,marca:'bremen'},{name:'Destornillador philip 4x80',cant:1,marca:'bremen'},{name:'Destornillador philip 5x125',cant:1,marca:'bremen'},{name:'Destornillador philip 5x150',cant:1,marca:'bremen'},{name:'Destornillador philip 6x100',cant:1,marca:'bremen'},{name:'Destornillador philip 6x125',cant:1,marca:'bremen'},{name:'Destornillador philip 6x150',cant:1,marca:'bremen'},{name:'Destornillador plano 4x100',cant:1,marca:'bremen'},{name:'Destornillador plano 5x100',cant:1,marca:'bremen'},{name:'Destornillador plano 6x100',cant:1,marca:'bremen'}];
+const DEFAULT_MOTOR_ITEMS=['Chequear nivel de aceite de motor','Chequear nivel de refrigerante','Chequear nivel de líquido lavaparabrisas (completar de ser necesario)','Chequear nivel de urea (completar de ser necesario)','Revisar existencia de fugas (aceite, refrigerante)'];
+const DEFAULT_CABINA_ITEMS=['Limpieza interior del equipo','Limpieza de tapizados (asientos, paneles, techo)','Chequeo de calefacción y aire acondicionado','Estado de espejos','Estado de cristales','Estado de escobillas'];
+const DEFAULT_ELECTRICO_ITEMS=['Estado de luces (verificar funcionamiento)','Revisar fallas en tablero','Funcionamiento de bocina'];
+const DEFAULT_EXTERIOR_ITEMS=['Limpieza exterior','Estado de neumáticos delanteros','Estado de neumáticos traseros','Estado de ópticas delanteras','Estado de faros traseros','Estado de extintor','Estado de patentes','Estado de faros de carrocería'];
+const DEFAULT_LUBRICACION_ITEMS=['Verificar existencia de fugas (tanques, carreteles, mangueras, surtidores)','Verificar el nivel hidráulico del sistema de lubricación','Verificar nivel de aceite del compresor y purgar','Verificar niveles de los tanques de almacenamiento (agua, aceites, refrig.)','Verificar nivel de combustible de las calderas de calefacción','Verificar limpieza de los carreteles','Verificar limpieza del interior de la caja','Verificar limpieza de la bandeja escurridora de filtros','Verificar estado de escalera y malacate para tambores','Verificar estado de luces interiores'];
+const DEFAULT_VEH_ITEMS=['Bocina','Estado de Carrocería','Estado de Ópticas y vidrios','Funcionamiento de Luces','Limpieza (Interior y exterior)','Radio Base','Baliza triangulo','Pertiga','Alarma de retroceso','Crique','Llave de rueda','Papeles (cedula, seguro, permisos, vtv)','Patentes (existencia y estado)','Cinturones de seguridad','Extintor y soporte (Estado)','Cuña (calzas)','Neumáticos y llantas (presión 35)','Neumático de auxilio','Espejos','Nivel líquido de frenos','Nivel de aceite de motor','Nivel de líquido refrigerante','Freno de mano'];
+let MOTOR_ITEMS,CABINA_ITEMS,ELECTRICO_ITEMS,EXTERIOR_ITEMS,LUBRICACION_ITEMS,VEH_ITEMS,CARRO_SECTIONS,HERR_CAMION;
+const DEFAULT_CARRO_SECTIONS={'BANDEJA 1':['1x BE5049 - Juego de llaves de vaso y puntas - 49 piezas','1x BE6217 - Juego de llaves de vaso para tapón de drenaje de aceite con cuadradillo de 3/8" - 17 piezas','1x CAV/115x80x30','1x DD/S14 - Juego de llaves de vaso de impacto mixtas con cuadradillo de 1/2"','1x S9HEX - Juego de llaves de vaso de 1/2" con puntas hexagonales - 9 piezas'],'BANDEJA 2':['1x 1995M-1.5 - Llave Allen hexagonal métrica de 1.5 mm','1x 1995M-2 - Llave Allen hexagonal métrica de 2 mm','1x 1995M-2.5 - Llave Allen hexagonal métrica de 2.5 mm','1x 6950QR - Trinquete reversible de cabeza de pera de 1/4" con 60 dientes','1x 6954-5 - Mango en T deslizante con cuadradillo de 1/4"','1x 6956 - Mango giratorio con cuadradillo de 1/4"','1x 6960-2 - Barra de extensión con cuadradillo de 1/4" de 50 mm','1x 6960-4 - Extensión con cuadradillo de 1/4" - 101 mm','1x 6960F-6 - Barra de extensión flexible con cuadradillo de 1/4"','1x 6966 - Junta universal con cuadradillo de 1/4"','2x 7400SM-10 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 10 mm','2x 7400SM-12 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 12 mm','2x 7400SM-14 - Vaso con cuadradillo de 3/8" y perfil hexagonal de 14 mm','1x 7400SM-16 - Vaso de 3/8" con perfil hexagonal de 16 mm','1x 7400SM-18 - Vaso de 3/8" con perfil hexagonal de 18 mm','1x 7400SM-20 - Vaso de 3/8" con perfil hexagonal de 20 mm','1x 7400SM-22 - Vaso de 3/8" con perfil hexagonal de 22 mm','1x 7402GPR-16 - Vaso para bujías de 3/8", 16 mm','1x 7402GPR-18 - Vaso para bujías de 3/8", 18 mm','1x 7402GPR-21 - Vaso para bujías de 3/8", 21 mm','1x 749-10 - Llave de boca abierta de 3/8", 10 mm','1x 749-11 - Llave de boca abierta de 3/8", 11 mm','1x 749-13 - Llave de boca abierta de 3/8", 13 mm','1x 749-14 - Llave de boca abierta de 3/8", 14 mm','1x 749-15 - Llave de boca abierta de 3/8", 15 mm','1x 749-17 - Llave de boca abierta de 3/8", 17 mm','1x 749-18 - Llave de boca abierta de 3/8", 18 mm','1x 749-19 - Llave de boca abierta de 3/8", 19 mm'],'BANDEJA 3':['1x 3625PU-50 - Maza de golpe seco con mango antideslizante (640 g)','1x 484-2000 - Maza con mango de nogal (2 kg)','1x 2535L - Herramienta de agarre magnético con luz','1x P-3140-100','1x P-3140-125','1x P-3155-125','1x P-3165-125','1x P-3165-150','1x P-3230-75','1x P-3240-125','1x P-3300-150','1x P-3300-75','1x P-3301-100','1x P-3302-150','1x P-3303-150'],'BANDEJA 4':['1x 2101GC-160IP - Alicates de corte lateral ERGO™','1x 21HDGC-200IP - Alicates de corte lateral de alta resistencia ERGO™','1x 2427GC-200IP - Alicates de punta semirredondeada ERGO™','1x 2430GC-200IP - Alicates de punta semirredondeada larga ERGO™','1x 2628GC-160IP - Alicates universales ERGO™ 160 mm','1x 2628GC-180IP - Alicates universales ERGO™ 180 mm','1x 2928-160 - Alicates reajustables para anillos de retención 160 mm','1x 2928-200 - Alicates reajustables para anillos de retención 200 mm','1x 2928-250 - Alicates reajustables para anillos de retención 250 mm','1x 2951-250 - Alicates de presión con mordazas curvas','1x 2952-165 - Alicates de presión con mordazas largas','1x 8224CIP - Alicates para bombas de agua ERGO™','1x BFLA01'],'BANDEJA 5':['1x 111Z-1/4','1x 111Z-5/16','1x 111Z-3/8','1x 111Z-7/16','1x 111Z-1/2','1x 111Z-9/16','1x 111Z-5/8','1x 111Z-11/16','1x 111Z-3/4','1x 111Z-7/8','1x 111Z-15/16','1x 111Z-1','1x 6Z-1/4-5/16','1x 6Z-3/8-7/16','1x 6Z-1/2-9/16','1x 6Z-5/8-3/4','1x 6Z-15/16-1','1x 6Z-1-1.1/8','1x 8069C IP - Llave ajustable 13 mm','1x 9070C - Llave ajustable ERGO™ 20 mm'],'BANDEJA 6':['1x 111M-6 al 111M-32 (llaves combinadas planas métricas completas)','1x 6M-6-7 al 6M-30-32 (llaves de boca doble métricas completas)','1x 1320RM-8-9, 10-11, 12-13 (llaves de carraca métricas)','1x 9071C - Llave ajustable ERGO™ 27 mm']};
+const DEFAULT_HERR_CAMION=[{name:'Masa 1/2kg',cant:1,marca:'Mota'},{name:'Martillo bolita',cant:1,marca:'Bahco'},{name:'Llave Stylson',cant:1,marca:'Bahco'},{name:'Saca filtro',cant:1,marca:'Bahco'},{name:'Alicate',cant:1,marca:'Bahco'},{name:'Pinza',cant:1,marca:'Bahco'},{name:'Pico de loro',cant:1,marca:'Bahco'},{name:'Mango de fuerza',cant:1,marca:'Bahco'},{name:'Llave combinada 10',cant:1,marca:'Bahco'},{name:'Llave combinada 1/2',cant:1,marca:'Bahco'},{name:'Llave combinada 13',cant:1,marca:'Bahco'},{name:'Llave combinada 14',cant:1,marca:'Bahco'},{name:'Llave combinada 11/16',cant:1,marca:'Bahco'},{name:'Llave combinada 17',cant:1,marca:'Bahco'},{name:'Llave combinada 18',cant:1,marca:'Bahco'},{name:'Llave combinada 19',cant:1,marca:'Bahco'},{name:'Llave combinada 20',cant:1,marca:'Bahco'},{name:'Llave combinada 21',cant:1,marca:'Bahco'},{name:'Llave combinada 22',cant:1,marca:'Bahco'},{name:'Llave combinada 23',cant:1,marca:'Bahco'},{name:'Llave combinada 24',cant:1,marca:'Bahco'},{name:'Llave combinada 25',cant:1,marca:'Bahco'},{name:'Llave combinada 26',cant:1,marca:'Bahco'},{name:'Llave combinada 27',cant:1,marca:'Bahco'},{name:'Juego de tubos S81MIX',cant:1,marca:'Bahco'},{name:'Destornillador philip 3x75',cant:1,marca:'bremen'},{name:'Destornillador philip 4x80',cant:1,marca:'bremen'},{name:'Destornillador philip 5x125',cant:1,marca:'bremen'},{name:'Destornillador philip 5x150',cant:1,marca:'bremen'},{name:'Destornillador philip 6x100',cant:1,marca:'bremen'},{name:'Destornillador philip 6x125',cant:1,marca:'bremen'},{name:'Destornillador philip 6x150',cant:1,marca:'bremen'},{name:'Destornillador plano 4x100',cant:1,marca:'bremen'},{name:'Destornillador plano 5x100',cant:1,marca:'bremen'},{name:'Destornillador plano 6x100',cant:1,marca:'bremen'}];
 
 function buildCheckboxRows(items,prefix,cols,tbodyId){
   const tbody=document.getElementById(tbodyId);
@@ -388,7 +495,165 @@ function buildHerrCamion(){
   });
 }
 
+// ══════════════════════════════════════════════
+// GESTIÓN DE LISTAS (carga / guarda / reconstruye)
+// ══════════════════════════════════════════════
+function loadLists(){
+  try{
+    const s=JSON.parse(localStorage.getItem('pg_lists')||'{}');
+    MOTOR_ITEMS      = s.MOTOR_ITEMS      || DEFAULT_MOTOR_ITEMS.slice();
+    CABINA_ITEMS     = s.CABINA_ITEMS     || DEFAULT_CABINA_ITEMS.slice();
+    ELECTRICO_ITEMS  = s.ELECTRICO_ITEMS  || DEFAULT_ELECTRICO_ITEMS.slice();
+    EXTERIOR_ITEMS   = s.EXTERIOR_ITEMS   || DEFAULT_EXTERIOR_ITEMS.slice();
+    LUBRICACION_ITEMS= s.LUBRICACION_ITEMS|| DEFAULT_LUBRICACION_ITEMS.slice();
+    VEH_ITEMS        = s.VEH_ITEMS        || DEFAULT_VEH_ITEMS.slice();
+    CARRO_SECTIONS   = s.CARRO_SECTIONS   || JSON.parse(JSON.stringify(DEFAULT_CARRO_SECTIONS));
+    HERR_CAMION      = s.HERR_CAMION      || JSON.parse(JSON.stringify(DEFAULT_HERR_CAMION));
+  }catch{
+    MOTOR_ITEMS=DEFAULT_MOTOR_ITEMS.slice();CABINA_ITEMS=DEFAULT_CABINA_ITEMS.slice();
+    ELECTRICO_ITEMS=DEFAULT_ELECTRICO_ITEMS.slice();EXTERIOR_ITEMS=DEFAULT_EXTERIOR_ITEMS.slice();
+    LUBRICACION_ITEMS=DEFAULT_LUBRICACION_ITEMS.slice();VEH_ITEMS=DEFAULT_VEH_ITEMS.slice();
+    CARRO_SECTIONS=JSON.parse(JSON.stringify(DEFAULT_CARRO_SECTIONS));
+    HERR_CAMION=JSON.parse(JSON.stringify(DEFAULT_HERR_CAMION));
+  }
+}
+
+function saveLists(){
+  const data={MOTOR_ITEMS,CABINA_ITEMS,ELECTRICO_ITEMS,EXTERIOR_ITEMS,LUBRICACION_ITEMS,VEH_ITEMS,CARRO_SECTIONS,HERR_CAMION};
+  try{localStorage.setItem('pg_lists',JSON.stringify(data));}catch(e){console.error(e);}
+  if(window._fsReady&&window._fsSetDoc){
+    window._fsSetDoc(window._fsDoc(window._db,'config','lists'),{...data,updatedAt:new Date().toISOString()})
+      .catch(e=>console.error('Firebase config save:',e));
+  }
+  const msg=document.getElementById('adminSaveMsg');
+  if(msg){msg.style.display='block';setTimeout(()=>msg.style.display='none',2000);}
+}
+
+function rebuildForms(){
+  ['motor_tbody','cabina_tbody','electrico_tbody','exterior_tbody','lubricacion_tbody','veh_tbody'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML='';
+  });
+  const cs=document.getElementById('carro_sections');if(cs)cs.innerHTML='';
+  const ht=document.getElementById('herrCamion_tbody');if(ht)ht.innerHTML='';
+  buildCheckboxRows(MOTOR_ITEMS,'motor',['Correcto','Incorrecto'],'motor_tbody');
+  buildCheckboxRows(CABINA_ITEMS,'cabina',['Correcto','Incorrecto'],'cabina_tbody');
+  buildCheckboxRows(ELECTRICO_ITEMS,'electrico',['Correcto','Incorrecto'],'electrico_tbody');
+  buildCheckboxRows(EXTERIOR_ITEMS,'exterior',['Correcto','Incorrecto'],'exterior_tbody');
+  buildCheckboxRows(LUBRICACION_ITEMS,'lubricacion',['Correcto','Incorrecto'],'lubricacion_tbody');
+  buildCheckboxRows(VEH_ITEMS,'veh',['Correcto','Incorrecto'],'veh_tbody');
+  buildCarroSections();buildHerrCamion();
+}
+
+// ══════════════════════════════════════════════
+// PANEL DE ADMINISTRACIÓN (solo supervisor)
+// ══════════════════════════════════════════════
+function showAdmin(){
+  document.getElementById('recordsSection').classList.add('hidden');
+  document.getElementById('adminPanel').classList.remove('hidden');
+  showAdminTab('camion');
+}
+function hideAdmin(){
+  document.getElementById('adminPanel').classList.add('hidden');
+  document.getElementById('recordsSection').classList.remove('hidden');
+}
+function showAdminTab(tab){
+  ['camion','vehiculo','carro','herr'].forEach(t=>{
+    document.getElementById('atab-content-'+t).classList.toggle('hidden',t!==tab);
+    document.getElementById('atab-btn-'+t).classList.toggle('admin-tab-active',t===tab);
+  });
+  if(tab==='camion')  renderCamionSection();
+  if(tab==='vehiculo') renderVehiculoList();
+  if(tab==='carro'){renderCarroSectionSelect();renderCarroSection();}
+  if(tab==='herr')    renderHerrList();
+}
+
+// -- Camión Lubricador --
+const CAMION_GETTERS={motor:()=>MOTOR_ITEMS,cabina:()=>CABINA_ITEMS,electrico:()=>ELECTRICO_ITEMS,exterior:()=>EXTERIOR_ITEMS,lubricacion:()=>LUBRICACION_ITEMS};
+const CAMION_SETTERS={motor:v=>MOTOR_ITEMS=v,cabina:v=>CABINA_ITEMS=v,electrico:v=>ELECTRICO_ITEMS=v,exterior:v=>EXTERIOR_ITEMS=v,lubricacion:v=>LUBRICACION_ITEMS=v};
+function renderCamionSection(){
+  const sec=document.getElementById('camion-section-select').value;
+  const items=CAMION_GETTERS[sec]();
+  document.getElementById('camion-items-list').innerHTML=items.length
+    ? items.map((item,i)=>`<div class="admin-item"><span>${item}</span><button class="admin-del-btn" onclick="deleteCamionItem('${sec}',${i})">✕</button></div>`).join('')
+    : '<p style="color:#aaa;font-size:13px;padding:8px 0">Sin ítems</p>';
+}
+function deleteCamionItem(sec,idx){
+  CAMION_SETTERS[sec](CAMION_GETTERS[sec]().filter((_,i)=>i!==idx));
+  saveLists();rebuildForms();renderCamionSection();
+}
+function addCamionItem(){
+  const inp=document.getElementById('camion-new-item'),val=inp.value.trim();
+  if(!val)return;
+  const sec=document.getElementById('camion-section-select').value;
+  CAMION_SETTERS[sec]([...CAMION_GETTERS[sec](),val]);
+  inp.value='';saveLists();rebuildForms();renderCamionSection();
+}
+
+// -- Vehículo Liviano --
+function renderVehiculoList(){
+  document.getElementById('vehiculo-items-list').innerHTML=VEH_ITEMS.length
+    ? VEH_ITEMS.map((item,i)=>`<div class="admin-item"><span>${item}</span><button class="admin-del-btn" onclick="deleteVehiculoItem(${i})">✕</button></div>`).join('')
+    : '<p style="color:#aaa;font-size:13px;padding:8px 0">Sin ítems</p>';
+}
+function deleteVehiculoItem(idx){VEH_ITEMS=VEH_ITEMS.filter((_,i)=>i!==idx);saveLists();rebuildForms();renderVehiculoList();}
+function addVehiculoItem(){
+  const inp=document.getElementById('vehiculo-new-item'),val=inp.value.trim();
+  if(!val)return;VEH_ITEMS=[...VEH_ITEMS,val];inp.value='';saveLists();rebuildForms();renderVehiculoList();
+}
+
+// -- Carro Herramientas --
+function renderCarroSectionSelect(){
+  const sel=document.getElementById('carro-section-select');
+  const cur=sel.value;
+  sel.innerHTML=Object.keys(CARRO_SECTIONS).map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
+}
+function renderCarroSection(){
+  const sec=document.getElementById('carro-section-select').value;
+  if(!sec||!CARRO_SECTIONS[sec]){document.getElementById('carro-items-list').innerHTML='';return;}
+  const items=CARRO_SECTIONS[sec];
+  document.getElementById('carro-items-list').innerHTML=items.length
+    ? items.map((item,i)=>`<div class="admin-item"><span>${item}</span><button class="admin-del-btn" onclick="deleteCarroItem(${i})">✕</button></div>`).join('')
+    : '<p style="color:#aaa;font-size:13px;padding:8px 0">Sin ítems en esta sección</p>';
+}
+function deleteCarroItem(idx){
+  const sec=document.getElementById('carro-section-select').value;
+  CARRO_SECTIONS[sec]=CARRO_SECTIONS[sec].filter((_,i)=>i!==idx);
+  saveLists();rebuildForms();renderCarroSection();
+}
+function addCarroItem(){
+  const inp=document.getElementById('carro-new-item'),val=inp.value.trim();
+  if(!val)return;
+  const sec=document.getElementById('carro-section-select').value;if(!sec)return;
+  CARRO_SECTIONS[sec]=[...CARRO_SECTIONS[sec],val];inp.value='';saveLists();rebuildForms();renderCarroSection();
+}
+function addCarroSection(){
+  const name=prompt('Nombre de la nueva sección:');if(!name||!name.trim())return;
+  const n=name.trim().toUpperCase();
+  if(CARRO_SECTIONS[n]){alert('Ya existe esa sección.');return;}
+  CARRO_SECTIONS[n]=[];saveLists();rebuildForms();
+  renderCarroSectionSelect();
+  document.getElementById('carro-section-select').value=n;
+  renderCarroSection();
+}
+
+// -- Herramientas Camión --
+function renderHerrList(){
+  const rows=HERR_CAMION.map((h,i)=>`<tr><td>${h.name}</td><td style="text-align:center">${h.cant}</td><td>${h.marca}</td><td><button class="admin-del-btn" onclick="deleteHerrItem(${i})">✕</button></td></tr>`).join('');
+  document.getElementById('herr-items-list').innerHTML=`<table class="admin-herr-table"><thead><tr><th>Herramienta</th><th style="width:50px">Cant</th><th>Marca</th><th style="width:40px"></th></tr></thead><tbody>${rows||'<tr><td colspan="4" style="color:#aaa;text-align:center;padding:8px">Sin ítems</td></tr>'}</tbody></table>`;
+}
+function deleteHerrItem(idx){HERR_CAMION=HERR_CAMION.filter((_,i)=>i!==idx);saveLists();rebuildForms();renderHerrList();}
+function addHerrItem(){
+  const name=document.getElementById('herr-new-name').value.trim();
+  const cant=parseInt(document.getElementById('herr-new-cant').value)||1;
+  const marca=document.getElementById('herr-new-marca').value.trim();
+  if(!name)return;
+  HERR_CAMION=[...HERR_CAMION,{name,cant,marca:marca||''}];
+  document.getElementById('herr-new-name').value='';document.getElementById('herr-new-cant').value='1';document.getElementById('herr-new-marca').value='';
+  saveLists();rebuildForms();renderHerrList();
+}
+
 function init(){
+  loadLists();
   buildCheckboxRows(MOTOR_ITEMS,'motor',['Correcto','Incorrecto'],'motor_tbody');
   buildCheckboxRows(CABINA_ITEMS,'cabina',['Correcto','Incorrecto'],'cabina_tbody');
   buildCheckboxRows(ELECTRICO_ITEMS,'electrico',['Correcto','Incorrecto'],'electrico_tbody');
