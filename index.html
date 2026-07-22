@@ -166,12 +166,24 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
       });
     }
 
-    // Wait for app to be ready then start listener
+    // Wait for app to be ready then start listener and sync config
     window.addEventListener('load', () => {
       setTimeout(() => {
         startListener();
         const statusEl = document.getElementById('syncStatus');
         if (statusEl) statusEl.textContent = '🟢 Sincronizado';
+        // Sync checklist config from Firebase so all devices see supervisor's changes
+        getDoc(doc(db, 'config', 'lists')).then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            delete data.updatedAt;
+            localStorage.setItem('pg_lists', JSON.stringify(data));
+            if (typeof loadLists === 'function' && typeof rebuildForms === 'function') {
+              loadLists();
+              rebuildForms();
+            }
+          }
+        }).catch(e => console.error('Config sync error:', e));
       }, 500);
     });
   </script>
