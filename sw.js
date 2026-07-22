@@ -1,4 +1,4 @@
-const CACHE = 'pg-checklist-v3';
+const CACHE = 'pg-checklist-v4';
 const ASSETS = [
   '/checklist-pg/',
   '/checklist-pg/index.html',
