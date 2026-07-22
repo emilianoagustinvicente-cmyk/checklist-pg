@@ -179,8 +179,16 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
             delete data.updatedAt;
             localStorage.setItem('pg_lists', JSON.stringify(data));
             if (typeof loadLists === 'function' && typeof rebuildForms === 'function') {
+              // Guardar estado actual de checkboxes antes de reconstruir
+              const checked = {};
+              document.querySelectorAll('input[type=radio]:checked').forEach(r => { checked[r.name] = r.value; });
               loadLists();
               rebuildForms();
+              // Restaurar los que ya estaban marcados
+              Object.entries(checked).forEach(([name, val]) => {
+                const el = document.querySelector(`input[name="${name}"][value="${val}"]`);
+                if (el) el.checked = true;
+              });
             }
           }
         }, e => console.error('Config sync error:', e));
@@ -694,6 +702,9 @@ function doLogin(){
     }else{
       document.getElementById('tecnicoView').classList.remove('hidden');
       document.getElementById('supervisorView').classList.add('hidden');
+      // Reconstruir formularios con los ítems más recientes al iniciar sesión
+      loadLists();
+      rebuildForms();
     }
   }else{document.getElementById('loginError').classList.remove('hidden');}
 }
