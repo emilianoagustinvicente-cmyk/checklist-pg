@@ -172,9 +172,9 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
         startListener();
         const statusEl = document.getElementById('syncStatus');
         if (statusEl) statusEl.textContent = '🟢 Sincronizado';
-        // Sync checklist config from Firebase so all devices see supervisor's changes
-        getDoc(doc(db, 'config', 'lists')).then(snap => {
-          if (snap.exists()) {
+        // Escucha en tiempo real la config del supervisor — cualquier cambio llega al instante
+        onSnapshot(doc(db, 'config', 'lists'), snap => {
+          if (snap.exists() && !snap.metadata.hasPendingWrites) {
             const data = snap.data();
             delete data.updatedAt;
             localStorage.setItem('pg_lists', JSON.stringify(data));
@@ -183,7 +183,7 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
               rebuildForms();
             }
           }
-        }).catch(e => console.error('Config sync error:', e));
+        }, e => console.error('Config sync error:', e));
       }, 500);
     });
   </script>
