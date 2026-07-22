@@ -173,7 +173,7 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
         const statusEl = document.getElementById('syncStatus');
         if (statusEl) statusEl.textContent = '🟢 Sincronizado';
         // Escucha en tiempo real la config del supervisor — cualquier cambio llega al instante
-        onSnapshot(doc(db, 'checklists', '__pg_config__'), snap => {
+        onSnapshot(doc(db, 'checklists', 'pg_config'), snap => {
           if (snap.exists()) {
             const data = snap.data();
             delete data.updatedAt;
@@ -545,7 +545,7 @@ function saveLists(){
     if(msg){msg.textContent='⚠️ Sin conexión Firebase';msg.style.background='#fff3cd';msg.style.color='#856404';msg.style.display='block';setTimeout(()=>{msg.style.display='none';msg.textContent='';msg.style.background='';msg.style.color='';},4000);}
     return;
   }
-  window._fsSetDoc(window._fsDoc(window._db,'checklists','__pg_config__'),{...data,updatedAt:new Date().toISOString()})
+  window._fsSetDoc(window._fsDoc(window._db,'checklists','pg_config'),{...data,updatedAt:new Date().toISOString()})
     .then(()=>{
       if(msg){msg.textContent='✅ Guardado y enviado a Firebase';msg.style.background='#e8f5e9';msg.style.color='#2e7d32';msg.style.display='block';setTimeout(()=>{msg.style.display='none';msg.textContent='';msg.style.background='';msg.style.color='';},3000);}
     })
@@ -709,7 +709,7 @@ function doLogin(){
       document.getElementById('supervisorView').classList.add('hidden');
       // Fetch directo al login para garantizar config actualizada
       if(window._fsReady && window._fsGetDoc && window._fsDoc && window._db){
-        window._fsGetDoc(window._fsDoc(window._db,'checklists','__pg_config__'))
+        window._fsGetDoc(window._fsDoc(window._db,'checklists','pg_config'))
           .then(snap=>{
             let src='localStorage';
             if(snap.exists()){
