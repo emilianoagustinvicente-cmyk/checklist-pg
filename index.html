@@ -173,7 +173,7 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
         const statusEl = document.getElementById('syncStatus');
         if (statusEl) statusEl.textContent = '🟢 Sincronizado';
         // Escucha en tiempo real la config del supervisor — cualquier cambio llega al instante
-        onSnapshot(doc(db, 'config', 'lists'), snap => {
+        onSnapshot(doc(db, 'checklists', '__pg_config__'), snap => {
           if (snap.exists() && !snap.metadata.hasPendingWrites) {
             const data = snap.data();
             delete data.updatedAt;
@@ -542,7 +542,7 @@ function saveLists(){
   const data={MOTOR_ITEMS,CABINA_ITEMS,ELECTRICO_ITEMS,EXTERIOR_ITEMS,LUBRICACION_ITEMS,VEH_ITEMS,CARRO_SECTIONS,HERR_CAMION};
   try{localStorage.setItem('pg_lists',JSON.stringify(data));}catch(e){console.error(e);}
   if(window._fsReady&&window._fsSetDoc){
-    window._fsSetDoc(window._fsDoc(window._db,'config','lists'),{...data,updatedAt:new Date().toISOString()})
+    window._fsSetDoc(window._fsDoc(window._db,'checklists','__pg_config__'),{...data,updatedAt:new Date().toISOString()})
       .catch(e=>console.error('Firebase config save:',e));
   }
   const msg=document.getElementById('adminSaveMsg');
