@@ -174,17 +174,16 @@ body{font-family:Arial,sans-serif;background:#f0f2f5;min-height:100vh}
         if (statusEl) statusEl.textContent = '🟢 Sincronizado';
         // Escucha en tiempo real la config del supervisor — cualquier cambio llega al instante
         onSnapshot(doc(db, 'checklists', '__pg_config__'), snap => {
-          if (snap.exists() && !snap.metadata.hasPendingWrites) {
+          if (snap.exists()) {
             const data = snap.data();
             delete data.updatedAt;
             localStorage.setItem('pg_lists', JSON.stringify(data));
+            window._pgConfigReady = true;
             if (typeof loadLists === 'function' && typeof rebuildForms === 'function') {
-              // Guardar estado actual de checkboxes antes de reconstruir
               const checked = {};
               document.querySelectorAll('input[type=radio]:checked').forEach(r => { checked[r.name] = r.value; });
               loadLists();
               rebuildForms();
-              // Restaurar los que ya estaban marcados
               Object.entries(checked).forEach(([name, val]) => {
                 const el = document.querySelector(`input[name="${name}"][value="${val}"]`);
                 if (el) el.checked = true;
@@ -702,9 +701,17 @@ function doLogin(){
     }else{
       document.getElementById('tecnicoView').classList.remove('hidden');
       document.getElementById('supervisorView').classList.add('hidden');
-      // Reconstruir formularios con los ítems más recientes al iniciar sesión
-      loadLists();
-      rebuildForms();
+      // Fetch directo al login para garantizar config actualizada
+      if(window._fsReady && window._fsGetDoc && window._fsDoc && window._db){
+        window._fsGetDoc(window._fsDoc(window._db,'checklists','__pg_config__'))
+          .then(snap=>{
+            if(snap.exists()){const d=snap.data();delete d.updatedAt;localStorage.setItem('pg_lists',JSON.stringify(d));}
+            loadLists();rebuildForms();
+          })
+          .catch(()=>{loadLists();rebuildForms();});
+      }else{
+        loadLists();rebuildForms();
+      }
     }
   }else{document.getElementById('loginError').classList.remove('hidden');}
 }
