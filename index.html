@@ -540,12 +540,18 @@ function loadLists(){
 function saveLists(){
   const data={MOTOR_ITEMS,CABINA_ITEMS,ELECTRICO_ITEMS,EXTERIOR_ITEMS,LUBRICACION_ITEMS,VEH_ITEMS,CARRO_SECTIONS,HERR_CAMION};
   try{localStorage.setItem('pg_lists',JSON.stringify(data));}catch(e){console.error(e);}
-  if(window._fsReady&&window._fsSetDoc){
-    window._fsSetDoc(window._fsDoc(window._db,'checklists','__pg_config__'),{...data,updatedAt:new Date().toISOString()})
-      .catch(e=>console.error('Firebase config save:',e));
-  }
   const msg=document.getElementById('adminSaveMsg');
-  if(msg){msg.style.display='block';setTimeout(()=>msg.style.display='none',2000);}
+  if(!window._fsReady||!window._fsSetDoc){
+    if(msg){msg.textContent='⚠️ Sin conexión Firebase';msg.style.background='#fff3cd';msg.style.color='#856404';msg.style.display='block';setTimeout(()=>{msg.style.display='none';msg.textContent='';msg.style.background='';msg.style.color='';},4000);}
+    return;
+  }
+  window._fsSetDoc(window._fsDoc(window._db,'checklists','__pg_config__'),{...data,updatedAt:new Date().toISOString()})
+    .then(()=>{
+      if(msg){msg.textContent='✅ Guardado y enviado a Firebase';msg.style.background='#e8f5e9';msg.style.color='#2e7d32';msg.style.display='block';setTimeout(()=>{msg.style.display='none';msg.textContent='';msg.style.background='';msg.style.color='';},3000);}
+    })
+    .catch(e=>{
+      if(msg){msg.textContent='❌ Error Firebase: '+e.message;msg.style.background='#fdecea';msg.style.color='#b71c1c';msg.style.display='block';setTimeout(()=>{msg.style.display='none';msg.textContent='';msg.style.background='';msg.style.color='';},6000);}
+    });
 }
 
 function rebuildForms(){
@@ -705,12 +711,28 @@ function doLogin(){
       if(window._fsReady && window._fsGetDoc && window._fsDoc && window._db){
         window._fsGetDoc(window._fsDoc(window._db,'checklists','__pg_config__'))
           .then(snap=>{
-            if(snap.exists()){const d=snap.data();delete d.updatedAt;localStorage.setItem('pg_lists',JSON.stringify(d));}
+            let src='localStorage';
+            if(snap.exists()){
+              const d=snap.data();delete d.updatedAt;
+              localStorage.setItem('pg_lists',JSON.stringify(d));
+              src='Firebase ('+((d.MOTOR_ITEMS||[]).length)+' items motor)';
+            }else{
+              src='localStorage (sin config en Firebase)';
+            }
             loadLists();rebuildForms();
+            const sb=document.getElementById('syncStatus');
+            if(sb)sb.textContent='🔧 Config: '+src;
+            setTimeout(()=>{if(sb)sb.textContent='🟢 Sincronizado';},4000);
           })
-          .catch(()=>{loadLists();rebuildForms();});
+          .catch(e=>{
+            loadLists();rebuildForms();
+            const sb=document.getElementById('syncStatus');
+            if(sb)sb.textContent='❌ Config error: '+e.message;
+          });
       }else{
         loadLists();rebuildForms();
+        const sb=document.getElementById('syncStatus');
+        if(sb)sb.textContent='⚠️ Firebase no listo';
       }
     }
   }else{document.getElementById('loginError').classList.remove('hidden');}
